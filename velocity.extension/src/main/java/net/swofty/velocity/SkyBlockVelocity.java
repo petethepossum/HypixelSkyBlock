@@ -46,6 +46,9 @@ import net.swofty.velocity.gamemanager.BalanceConfigurations;
 import net.swofty.velocity.gamemanager.GameManager;
 import net.swofty.velocity.gamemanager.TransferHandler;
 import net.swofty.velocity.presence.PresencePublisher;
+import net.swofty.commons.protocol.objects.friend.NotifyFriendPresenceProtocolObject;
+import net.swofty.commons.ServiceType;
+import net.swofty.proxyapi.redis.ServerOutboundMessage;
 import net.swofty.velocity.packet.PlayerChannelHandler;
 import net.swofty.velocity.redis.ChannelListener;
 import net.swofty.velocity.redis.RedisListener;
@@ -119,6 +122,7 @@ public class SkyBlockVelocity {
 					injectPlayer(postLoginEvent.getPlayer());
 					TestFlowManager.handlePlayerJoin(postLoginEvent.getPlayer().getUsername());
 					PresencePublisher.publish(postLoginEvent.getPlayer(), true, (String) null, null);
+					sendFriendPresenceNotification(postLoginEvent.getPlayer(), true);
 					continuation.resume();
 				}));
 		server.getEventManager().register(this, PermissionsSetupEvent.class,
@@ -134,6 +138,7 @@ public class SkyBlockVelocity {
 							// Handle test flow player leave
 							TestFlowManager.handlePlayerLeave(disconnectEvent.getPlayer().getUsername());
 							PresencePublisher.publish(disconnectEvent.getPlayer(), false, (String) null, null);
+							sendFriendPresenceNotification(disconnectEvent.getPlayer(), false);
 							removePlayer(disconnectEvent.getPlayer());
 						})
 		);
@@ -152,6 +157,7 @@ public class SkyBlockVelocity {
                 var type = current.map(conn -> GameManager.getTypeFromRegisteredServer(conn.getServer())).orElse(null);
                 PresencePublisher.publish(player, true, current.map(ServerConnection::getServer).orElse(null),
                         type != null ? type.name() : null);
+                sendFriendPresenceNotification(player, true);
             });
         }).repeat(Duration.ofSeconds(10)).schedule();
 
@@ -361,5 +367,17 @@ public class SkyBlockVelocity {
 		channel.eventLoop().submit(() -> {
 			channel.pipeline().remove("PACKET");
 		});
+	}
+
+	private void sendFriendPresenceNotification(Player player, boolean online) {
+		ServerOutboundMessage.sendMessageToServiceFireAndForget(
+				ServiceType.FRIEND,
+				new NotifyFriendPresenceProtocolObject(),
+				new NotifyFriendPresenceProtocolObject.NotifyFriendPresenceMessage(
+						player.getUniqueId(),
+						player.getUsername(),
+						online
+				)
+		);
 	}
 }

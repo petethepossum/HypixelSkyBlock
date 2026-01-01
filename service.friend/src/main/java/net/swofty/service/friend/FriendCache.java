@@ -464,6 +464,9 @@ public class FriendCache {
         String type = info.getServerType();
         String id = info.getServerId();
         if (type == null && id == null) return null;
+        if (id != null && id.matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")) {
+            return type; // hide raw UUIDs; show type only
+        }
         if (type != null && id != null) return type + " - " + id;
         return type != null ? type : id;
     }

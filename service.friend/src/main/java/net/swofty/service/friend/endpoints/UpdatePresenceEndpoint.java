@@ -21,22 +21,7 @@ public class UpdatePresenceEndpoint implements ServiceEndpoint<
             ServiceProxyRequest message,
             UpdatePresenceProtocolObject.UpdatePresenceMessage messageObject) {
 
-        PresenceInfo incoming = messageObject.presence();
-        PresenceInfo previous = PresenceStorage.get(incoming.getUuid());
-
-        // Detect state change to trigger friend join/leave notifications
-        boolean stateChanged = previous == null || previous.isOnline() != incoming.isOnline();
-        PresenceStorage.upsert(incoming);
-
-        if (stateChanged) {
-            String playerName = FriendCache.getPlayerName(incoming.getUuid());
-            if (incoming.isOnline()) {
-                FriendCache.handlePlayerJoin(incoming.getUuid(), playerName);
-            } else {
-                FriendCache.handlePlayerLeave(incoming.getUuid(), playerName);
-            }
-        }
-
+        PresenceStorage.upsert(messageObject.presence());
         return new UpdatePresenceProtocolObject.UpdatePresenceResponse(true);
     }
 }
