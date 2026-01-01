@@ -376,7 +376,15 @@ public class FriendCache {
         FriendData playerData = getFriendData(playerUuid);
 
         for (Friend friend : playerData.getFriends()) {
+            net.swofty.commons.presence.PresenceInfo friendPresence = PresenceStorage.get(friend.getUuid());
+            if (friendPresence == null || !friendPresence.isOnline()) continue;
+
             FriendData friendData = cachedFriendData.get(friend.getUuid());
+            if (friendData == null) {
+                friendData = getFriendData(friend.getUuid());
+                cachedFriendData.put(friend.getUuid(), friendData);
+            }
+
             if (friendData != null && friendData.getSettings().isJoinLeaveNotifications()) {
                 sendEvent(new FriendJoinNotificationEvent(friend.getUuid(), playerUuid, playerName));
             }

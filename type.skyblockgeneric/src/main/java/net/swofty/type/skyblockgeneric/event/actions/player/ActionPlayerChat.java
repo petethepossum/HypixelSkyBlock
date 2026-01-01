@@ -14,6 +14,8 @@ import net.swofty.type.generic.user.categories.Rank;
 import net.swofty.type.skyblockgeneric.SkyBlockGenericLoader;
 import net.swofty.type.skyblockgeneric.data.SkyBlockDataHandler;
 import net.swofty.type.skyblockgeneric.user.SkyBlockPlayer;
+import net.swofty.proxyapi.redis.ServerOutboundMessage;
+import net.swofty.commons.protocol.objects.staff.StaffBroadcastProtocolObject;
 
 import java.util.List;
 
@@ -54,11 +56,26 @@ public class ActionPlayerChat implements HypixelEventClass {
                 player.getChatType().switchTo(DatapointChatType.Chats.ALL);
                 return;
             }
-            // Staff chat: broadcast to online staff only
+            String serverName = HypixelConst.getShortenedServerName() != null
+                    ? HypixelConst.getShortenedServerName()
+                    : (HypixelConst.getServerName() != null ? HypixelConst.getServerName() : "unknown");
+
+            // Broadcast network-wide recipients will filter by staff + staffview
+            ServerOutboundMessage.sendMessageToAllServicesFireAndForget(
+                    new StaffBroadcastProtocolObject(),
+                    new StaffBroadcastProtocolObject.StaffBroadcastMessage(
+                            player.getUuid(),
+                            player.getFullDisplayName(),
+                            finalMessage,
+                            serverName
+                    )
+            );
+
+            // Immediate local echo to staff on this server who have staffview on
             SkyBlockGenericLoader.getLoadedPlayers().stream()
                     .filter(SkyBlockPlayer::getRankIsStaff)
                     .filter(staff -> net.swofty.type.generic.command.commands.ChatCommand.isStaffViewEnabled(staff.getUuid()))
-                    .forEach(staff -> staff.sendMessage("§b[STAFF] " + player.getFullDisplayName() + "§f: " + finalMessage));
+                    .forEach(staff -> staff.sendMessage("§b[STAFF] " + player.getFullDisplayName() + " §7(" + serverName + ")§f: " + finalMessage));
             return;
         }
 
