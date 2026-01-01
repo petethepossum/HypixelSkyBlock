@@ -5,7 +5,7 @@ import net.swofty.commons.proxy.ProxyChannelRequirements.RequiredKey;
 
 import java.util.List;
 
-public class StaffBroadcastRequirements implements ProxyChannelRequirements {
+public class StaffBroadcastRequirements extends ProxyChannelRequirements {
     @Override
     public List<RequiredKey> getRequiredKeysForServer() {
         return List.of(

@@ -24,4 +24,8 @@ dependencies {
     compileOnly("net.minestom:minestom:2025.12.20c-1.21.11") {
         exclude(group = "org.jboss.shrinkwrap.resolver", module = "shrinkwrap-resolver-depchain")
     }
+
+    // Lombok for getters/constructors used throughout commons dk why this was erroring on CI build weird.
+    compileOnly("org.projectlombok:lombok:1.18.34")
+    annotationProcessor("org.projectlombok:lombok:1.18.34")
 }
