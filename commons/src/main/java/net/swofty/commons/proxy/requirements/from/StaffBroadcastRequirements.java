@@ -1,5 +1,8 @@
 package net.swofty.commons.proxy.requirements.from;
 
+import net.swofty.commons.proxy.ProxyChannelRequirements;
+import net.swofty.commons.proxy.ProxyChannelRequirements.RequiredKey;
+
 import java.util.List;
 
 public class StaffBroadcastRequirements implements ProxyChannelRequirements {
