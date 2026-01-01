@@ -61,10 +61,12 @@ public class ActionPlayerChat implements HypixelEventClass {
                     : (HypixelConst.getServerName() != null ? HypixelConst.getServerName() : "unknown");
 
             StaffBroadcastProtocolObject proto = new StaffBroadcastProtocolObject();
+            // Use rank prefix + username no sb level
+            String displayName = player.getRank().getPrefix() + player.getUsername();
             String payload = proto.getSerializer().serialize(
                     new StaffBroadcastProtocolObject.StaffBroadcastMessage(
                             player.getUuid(),
-                            player.getFullDisplayName(),
+                            displayName,
                             finalMessage,
                             serverName
                     )
@@ -78,11 +80,6 @@ public class ActionPlayerChat implements HypixelEventClass {
                     json -> {}
             );
 
-            // Immediate local echo to staff on this server who have staffview on
-            SkyBlockGenericLoader.getLoadedPlayers().stream()
-                    .filter(SkyBlockPlayer::getRankIsStaff)
-                    .filter(staff -> net.swofty.type.generic.command.commands.ChatCommand.isStaffViewEnabled(staff.getUuid()))
-                    .forEach(staff -> staff.sendMessage("§b[STAFF] " + player.getFullDisplayName() + " §7(" + serverName + ")§f: " + finalMessage));
             return;
         }
 

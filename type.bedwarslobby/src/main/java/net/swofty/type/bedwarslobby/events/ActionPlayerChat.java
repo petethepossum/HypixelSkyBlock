@@ -15,6 +15,7 @@ import net.swofty.type.generic.event.HypixelEventClass;
 import net.swofty.type.generic.party.PartyManager;
 import net.swofty.type.generic.user.HypixelPlayer;
 import net.swofty.type.generic.user.categories.Rank;
+import net.swofty.type.generic.HypixelConst;
 import net.swofty.proxyapi.redis.ServerOutboundMessage;
 import net.swofty.commons.proxy.ToProxyChannels;
 
@@ -63,7 +64,9 @@ public class ActionPlayerChat implements HypixelEventClass {
                 player.getChatType().switchTo(DatapointChatType.Chats.ALL);
                 return;
             }
-            String serverName = player.getInstance() != null ? player.getInstance().toString() : "unknown";
+            String serverName = HypixelConst.getShortenedServerName() != null
+                    ? HypixelConst.getShortenedServerName()
+                    : (HypixelConst.getServerName() != null ? HypixelConst.getServerName() : "unknown");
             ServerOutboundMessage.sendMessageToProxy(
                     ToProxyChannels.PLAYER_HANDLER,
                     new org.json.JSONObject()

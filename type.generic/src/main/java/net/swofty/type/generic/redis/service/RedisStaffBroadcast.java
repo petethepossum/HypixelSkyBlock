@@ -30,7 +30,11 @@ public class RedisStaffBroadcast implements ProxyToClient {
             StaffBroadcastProtocolObject.StaffBroadcastMessage msg =
                     proto.getSerializer().deserialize(payload);
 
-            String formatted = "§b[STAFF] §f" + msg.senderName() + " §7(" + msg.server() + ")§f: " + msg.message();
+            String serverLabel = msg.server() == null ? "" : msg.server();
+            boolean showServer = !serverLabel.isBlank() && !"proxy".equalsIgnoreCase(serverLabel);
+            String formatted = "§b[STAFF] §f" + msg.senderName()
+                    + (showServer ? " §7(" + serverLabel + ")" : "")
+                    + "§f: " + msg.message();
 
             for (HypixelPlayer player : HypixelGenericLoader.getLoadedPlayers()) {
                 if (!player.getRank().isStaff()) continue;

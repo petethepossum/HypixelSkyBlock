@@ -36,6 +36,7 @@ import net.kyori.adventure.text.Component;
 import net.swofty.commons.Configuration;
 import net.swofty.commons.ServerType;
 import net.swofty.commons.proxy.FromProxyChannels;
+import net.swofty.commons.protocol.objects.player.GetDisplayNameProtocolObject;
 import net.swofty.redisapi.api.RedisAPI;
 import net.swofty.velocity.command.ServerStatusCommand;
 import net.swofty.velocity.data.CoopDatabase;
@@ -69,6 +70,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -92,6 +94,8 @@ public class SkyBlockVelocity {
 	private static boolean shouldAuthenticate = false;
 	@Getter
 	private static boolean supportCrossVersion = false;
+	// Track last known short server name per player for staffchat
+	private static final ConcurrentHashMap<UUID, String> lastServerDisplay = new ConcurrentHashMap<>();
 	@Inject
 	private ProxyServer proxy;
 
@@ -124,6 +128,7 @@ public class SkyBlockVelocity {
 					injectPlayer(postLoginEvent.getPlayer());
 					TestFlowManager.handlePlayerJoin(postLoginEvent.getPlayer().getUsername());
 					PresencePublisher.publish(postLoginEvent.getPlayer(), true, (String) null, null);
+					lastServerDisplay.put(postLoginEvent.getPlayer().getUniqueId(), "");
 					sendStaffJoinLeave(postLoginEvent.getPlayer(), true);
 					sendFriendPresenceNotification(postLoginEvent.getPlayer(), true);
 					continuation.resume();
@@ -151,6 +156,9 @@ public class SkyBlockVelocity {
 				(AwaitingEventExecutor<ServerConnectedEvent>) serverConnectedEvent ->
 						EventTask.async(() -> {
 							RegisteredServer newServer = serverConnectedEvent.getServer();
+							var gs = GameManager.getFromRegisteredServer(newServer);
+							String shortName = gs != null ? gs.shortDisplayName() : newServer.getServerInfo().getName();
+							lastServerDisplay.put(serverConnectedEvent.getPlayer().getUniqueId(), shortName);
 							var type = GameManager.getTypeFromRegisteredServer(newServer);
 							PresencePublisher.publish(serverConnectedEvent.getPlayer(), true, newServer, type != null ? type.name() : null);
 							sendFriendPresenceNotification(serverConnectedEvent.getPlayer(), true);
@@ -388,19 +396,29 @@ public class SkyBlockVelocity {
 	private void sendStaffJoinLeave(Player player, boolean joined) {
         String action = joined ? "§ejoined." : "§edisconnected.";
         String msg = action;
-        String serverName = player.getCurrentServer()
-                .map(conn -> {
-                    var gameServer = net.swofty.velocity.gamemanager.GameManager.getFromRegisteredServer(conn.getServer());
-                    if (gameServer != null) return gameServer.shortDisplayName();
-                    return conn.getServer().getServerInfo().getName();
-                })
-                .orElse("proxy");
+        // Do not show server name in join/leave messages looks weird. Kept just so protocol doesnt break
+        String serverName = "";
+
+        // fetch formatted name (rank prefix + ign) from friend service
+        ServerOutboundMessage.sendMessageToService(
+                ServiceType.FRIEND,
+                new GetDisplayNameProtocolObject(),
+                new GetDisplayNameProtocolObject.GetDisplayNameMessage(player.getUniqueId()),
+                response -> {
+                    try {
+                        GetDisplayNameProtocolObject.GetDisplayNameResponse parsed =
+                                new GetDisplayNameProtocolObject().getReturnSerializer().deserialize(response);
+                        lastServerDisplay.put(player.getUniqueId(), parsed.displayName());
+                    } catch (Exception ignored) {}
+                }
+        );
+        String displayName = lastServerDisplay.getOrDefault(player.getUniqueId(), player.getUsername());
 
         var proto = new net.swofty.commons.protocol.objects.staff.StaffBroadcastProtocolObject();
         String payload = proto.getSerializer().serialize(
                 new net.swofty.commons.protocol.objects.staff.StaffBroadcastProtocolObject.StaffBroadcastMessage(
                         player.getUniqueId(),
-                        player.getUsername(),
+                        displayName,
                         msg,
                         serverName
                 )
@@ -409,7 +427,7 @@ public class SkyBlockVelocity {
         JSONObject toSend = new JSONObject()
                 .put("payload", payload)
                 .put("sender", player.getUniqueId().toString())
-                .put("senderName", player.getUsername())
+                .put("senderName", displayName)
                 .put("message", msg)
                 .put("server", serverName);
 
