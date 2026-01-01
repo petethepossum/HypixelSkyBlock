@@ -38,7 +38,13 @@ public class RedisStaffBroadcast implements ProxyToClient {
                 player.sendMessage(formatted);
             }
 
-            return new JSONObject().put("success", true);
+
+            return new JSONObject()
+                    .put("success", true)
+                    .put("sender", msg.sender().toString())
+                    .put("senderName", msg.senderName())
+                    .put("message", msg.message())
+                    .put("server", msg.server());
         } catch (Exception e) {
             return new JSONObject().put("success", false).put("error", e.getMessage());
         }

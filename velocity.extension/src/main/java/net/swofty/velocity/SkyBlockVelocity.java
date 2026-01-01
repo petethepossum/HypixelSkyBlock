@@ -406,7 +406,13 @@ public class SkyBlockVelocity {
                 )
         );
 
-        JSONObject toSend = new JSONObject().put("payload", payload);
+        JSONObject toSend = new JSONObject()
+                .put("payload", payload)
+                .put("sender", player.getUniqueId().toString())
+                .put("senderName", player.getUsername())
+                .put("message", msg)
+                .put("server", serverName);
+
         net.swofty.velocity.gamemanager.GameManager.getServers().values().forEach(list ->
                 list.forEach(server -> RedisMessage.sendMessageToServer(
                         server.internalID(),

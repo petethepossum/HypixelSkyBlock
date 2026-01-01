@@ -206,7 +206,16 @@ public class ListenerPlayerHandler extends RedisListener {
     }
 
     private void broadcastStaff(String payload) {
-        JSONObject toSend = new JSONObject().put("payload", payload);
+        StaffBroadcastProtocolObject proto = new StaffBroadcastProtocolObject();
+        StaffBroadcastProtocolObject.StaffBroadcastMessage msg = proto.getSerializer().deserialize(payload);
+
+        JSONObject toSend = new JSONObject()
+                .put("payload", payload)
+                .put("sender", msg.sender().toString())
+                .put("senderName", msg.senderName())
+                .put("message", msg.message())
+                .put("server", msg.server());
+
         GameManager.getServers().values().forEach(list ->
                 list.forEach(server -> RedisMessage.sendMessageToServer(
                         server.internalID(),
