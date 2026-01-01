@@ -389,17 +389,30 @@ public class SkyBlockVelocity {
         String action = joined ? "§ejoined." : "§edisconnected.";
         String msg = action;
         String serverName = player.getCurrentServer()
-                .map(conn -> conn.getServer().getServerInfo().getName())
+                .map(conn -> {
+                    var gameServer = net.swofty.velocity.gamemanager.GameManager.getFromRegisteredServer(conn.getServer());
+                    if (gameServer != null) return gameServer.shortDisplayName();
+                    return conn.getServer().getServerInfo().getName();
+                })
                 .orElse("proxy");
 
-        RedisMessage.sendMessageToServer(
-                UUID.fromString(serverName),
-                FromProxyChannels.STAFF_BROADCAST,
-                new JSONObject()
-                        .put("sender", player.getUniqueId().toString())
-                        .put("senderName", player.getUsername())
-                        .put("message", msg)
-                        .put("server", serverName)
+        var proto = new net.swofty.commons.protocol.objects.staff.StaffBroadcastProtocolObject();
+        String payload = proto.getSerializer().serialize(
+                new net.swofty.commons.protocol.objects.staff.StaffBroadcastProtocolObject.StaffBroadcastMessage(
+                        player.getUniqueId(),
+                        player.getUsername(),
+                        msg,
+                        serverName
+                )
+        );
+
+        JSONObject toSend = new JSONObject().put("payload", payload);
+        net.swofty.velocity.gamemanager.GameManager.getServers().values().forEach(list ->
+                list.forEach(server -> RedisMessage.sendMessageToServer(
+                        server.internalID(),
+                        FromProxyChannels.STAFF_BROADCAST,
+                        toSend
+                ))
         );
 	}
 }

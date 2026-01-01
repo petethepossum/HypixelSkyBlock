@@ -67,11 +67,16 @@ public class ActionPlayerChat implements HypixelEventClass {
             ServerOutboundMessage.sendMessageToProxy(
                     ToProxyChannels.PLAYER_HANDLER,
                     new org.json.JSONObject()
+                            .put("uuid", player.getUuid().toString())
                             .put("action", "STAFF_BROADCAST")
-                            .put("sender", player.getUuid().toString())
-                            .put("senderName", player.getFullDisplayName())
-                            .put("message", message)
-                            .put("server", serverName),
+                            .put("payload", new net.swofty.commons.protocol.objects.staff.StaffBroadcastProtocolObject()
+                                    .getSerializer()
+                                    .serialize(new net.swofty.commons.protocol.objects.staff.StaffBroadcastProtocolObject.StaffBroadcastMessage(
+                                            player.getUuid(),
+                                            player.getFullDisplayName(),
+                                            message,
+                                            serverName
+                                    ))),
                     json -> {}
             );
             return;

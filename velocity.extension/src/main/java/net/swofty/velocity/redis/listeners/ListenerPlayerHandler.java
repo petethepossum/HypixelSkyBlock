@@ -11,6 +11,7 @@ import net.swofty.commons.UnderstandableProxyServer;
 import net.swofty.commons.proxy.FromProxyChannels;
 import net.swofty.commons.proxy.ToProxyChannels;
 import net.swofty.commons.proxy.requirements.to.PlayerHandlerRequirements;
+import net.swofty.commons.protocol.objects.staff.StaffBroadcastProtocolObject;
 import net.swofty.velocity.SkyBlockVelocity;
 import net.swofty.velocity.gamemanager.GameManager;
 import net.swofty.velocity.gamemanager.TransferHandler;
@@ -31,10 +32,30 @@ public class ListenerPlayerHandler extends RedisListener {
 
 	@Override
 	public JSONObject receivedMessage(JSONObject message, UUID serverUUID) {
-		UUID uuid = UUID.fromString(message.getString("uuid"));
 		PlayerHandlerRequirements.PlayerHandlerActions action =
 				PlayerHandlerRequirements.PlayerHandlerActions.valueOf(
 						message.getString("action"));
+
+		// Allow staff broadcasts without a player UUID so that proxy sending can work hopefully lol
+		if (action == PlayerHandlerRequirements.PlayerHandlerActions.STAFF_BROADCAST && !message.has("uuid")) {
+			String payload;
+			if (message.has("payload")) {
+				payload = message.getString("payload");
+			} else {
+				UUID sender = UUID.fromString(message.getString("sender"));
+				String senderName = message.getString("senderName");
+				String msg = message.getString("message");
+				String server = message.optString("server", "unknown");
+				payload = new StaffBroadcastProtocolObject().getSerializer()
+						.serialize(new StaffBroadcastProtocolObject.StaffBroadcastMessage(
+								sender, senderName, msg, server
+						));
+			}
+			broadcastStaff(payload);
+			return new JSONObject().put("success", true);
+		}
+
+		UUID uuid = UUID.fromString(message.getString("uuid"));
 
         Optional<Player> potentialPlayer = SkyBlockVelocity.getServer().getPlayer(uuid);
         if (potentialPlayer.isEmpty()) {
@@ -153,6 +174,23 @@ public class ListenerPlayerHandler extends RedisListener {
 				String messageToSend = message.getString("message");
 				player.sendMessage(JSONComponentSerializer.json().deserialize(messageToSend));
 			}
+            case STAFF_BROADCAST -> {
+                String payload;
+                if (message.has("payload")) {
+                    payload = message.getString("payload");
+                } else {
+                    // Fallback: construct payload from legacy fields if provided
+                    UUID sender = UUID.fromString(message.getString("sender"));
+                    String senderName = message.getString("senderName");
+                    String msg = message.getString("message");
+                    String server = message.optString("server", "unknown");
+                    payload = new StaffBroadcastProtocolObject().getSerializer()
+                            .serialize(new StaffBroadcastProtocolObject.StaffBroadcastMessage(
+                                    sender, senderName, msg, server
+                            ));
+                }
+                broadcastStaff(payload);
+            }
 		}
         return new JSONObject();
     }
@@ -165,5 +203,16 @@ public class ListenerPlayerHandler extends RedisListener {
                     type != null ? type.name() : null);
         } catch (Exception ignored) {
         }
+    }
+
+    private void broadcastStaff(String payload) {
+        JSONObject toSend = new JSONObject().put("payload", payload);
+        GameManager.getServers().values().forEach(list ->
+                list.forEach(server -> RedisMessage.sendMessageToServer(
+                        server.internalID(),
+                        FromProxyChannels.STAFF_BROADCAST,
+                        toSend
+                ))
+        );
     }
 }

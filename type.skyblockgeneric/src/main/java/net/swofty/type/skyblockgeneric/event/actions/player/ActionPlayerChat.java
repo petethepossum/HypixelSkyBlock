@@ -60,15 +60,22 @@ public class ActionPlayerChat implements HypixelEventClass {
                     ? HypixelConst.getShortenedServerName()
                     : (HypixelConst.getServerName() != null ? HypixelConst.getServerName() : "unknown");
 
-            // Broadcast network-wide recipients will filter by staff + staffview
-            ServerOutboundMessage.sendMessageToAllServicesFireAndForget(
-                    new StaffBroadcastProtocolObject(),
+            StaffBroadcastProtocolObject proto = new StaffBroadcastProtocolObject();
+            String payload = proto.getSerializer().serialize(
                     new StaffBroadcastProtocolObject.StaffBroadcastMessage(
                             player.getUuid(),
                             player.getFullDisplayName(),
                             finalMessage,
                             serverName
                     )
+            );
+            ServerOutboundMessage.sendMessageToProxy(
+                    net.swofty.commons.proxy.ToProxyChannels.PLAYER_HANDLER,
+                    new org.json.JSONObject()
+                            .put("uuid", player.getUuid().toString())
+                            .put("action", "STAFF_BROADCAST")
+                            .put("payload", payload),
+                    json -> {}
             );
 
             // Immediate local echo to staff on this server who have staffview on

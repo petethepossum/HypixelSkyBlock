@@ -18,8 +18,17 @@ public class RedisStaffBroadcast implements ProxyToClient {
     public JSONObject onMessage(JSONObject message) {
         try {
             StaffBroadcastProtocolObject proto = new StaffBroadcastProtocolObject();
+            String payload = message.has("payload")
+                    ? message.getString("payload")
+                    : proto.getSerializer().serialize(
+                            new StaffBroadcastProtocolObject.StaffBroadcastMessage(
+                                    java.util.UUID.fromString(message.getString("sender")),
+                                    message.optString("senderName", "Staff"),
+                                    message.getString("message"),
+                                    message.optString("server", "unknown")
+                            ));
             StaffBroadcastProtocolObject.StaffBroadcastMessage msg =
-                    proto.getSerializer().deserialize(message.getString("payload"));
+                    proto.getSerializer().deserialize(payload);
 
             String formatted = "§b[STAFF] §f" + msg.senderName() + " §7(" + msg.server() + ")§f: " + msg.message();
 
