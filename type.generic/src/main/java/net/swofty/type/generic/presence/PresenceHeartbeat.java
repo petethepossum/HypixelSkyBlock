@@ -19,7 +19,7 @@ public final class PresenceHeartbeat {
     public static void start() {
         MinecraftServer.getSchedulerManager().buildTask(PresenceHeartbeat::pulse)
                 .delay(TaskSchedule.seconds(2))
-                .repeat(TaskSchedule.seconds(10))
+                .repeat(TaskSchedule.seconds(5))
                 .schedule();
     }
 
