@@ -30,9 +30,16 @@ public class RedisStaffBroadcast implements ProxyToClient {
             StaffBroadcastProtocolObject.StaffBroadcastMessage msg =
                     proto.getSerializer().deserialize(payload);
 
+            String resolvedName;
+            try {
+                resolvedName = net.swofty.type.generic.user.HypixelPlayer.getDisplayName(msg.sender());
+            } catch (Exception e) {
+                resolvedName = msg.senderName(); // fallback to provided name
+            }
+
             String serverLabel = msg.server() == null ? "" : msg.server();
             boolean showServer = !serverLabel.isBlank() && !"proxy".equalsIgnoreCase(serverLabel);
-            String formatted = "§b[STAFF] §f" + msg.senderName()
+            String formatted = "§b[STAFF] §f" + resolvedName
                     + (showServer ? " §7(" + serverLabel + ")" : "")
                     + "§f: " + msg.message();
 

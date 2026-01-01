@@ -36,7 +36,6 @@ import net.kyori.adventure.text.Component;
 import net.swofty.commons.Configuration;
 import net.swofty.commons.ServerType;
 import net.swofty.commons.proxy.FromProxyChannels;
-import net.swofty.commons.protocol.objects.player.GetDisplayNameProtocolObject;
 import net.swofty.redisapi.api.RedisAPI;
 import net.swofty.velocity.command.ServerStatusCommand;
 import net.swofty.velocity.data.CoopDatabase;
@@ -399,20 +398,8 @@ public class SkyBlockVelocity {
         // Do not show server name in join/leave messages looks weird. Kept just so protocol doesnt break
         String serverName = "";
 
-        // fetch formatted name (rank prefix + ign) from friend service
-        ServerOutboundMessage.sendMessageToService(
-                ServiceType.FRIEND,
-                new GetDisplayNameProtocolObject(),
-                new GetDisplayNameProtocolObject.GetDisplayNameMessage(player.getUniqueId()),
-                response -> {
-                    try {
-                        GetDisplayNameProtocolObject.GetDisplayNameResponse parsed =
-                                new GetDisplayNameProtocolObject().getReturnSerializer().deserialize(response);
-                        lastServerDisplay.put(player.getUniqueId(), parsed.displayName());
-                    } catch (Exception ignored) {}
-                }
-        );
-        String displayName = lastServerDisplay.getOrDefault(player.getUniqueId(), player.getUsername());
+        // Send UUID and a basic name
+        String displayName = player.getUsername();
 
         var proto = new net.swofty.commons.protocol.objects.staff.StaffBroadcastProtocolObject();
         String payload = proto.getSerializer().serialize(
