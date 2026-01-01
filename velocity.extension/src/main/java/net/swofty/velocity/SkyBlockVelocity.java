@@ -385,21 +385,20 @@ public class SkyBlockVelocity {
 	}
 
 	private void sendStaffJoinLeave(Player player, boolean joined) {
-        // Build a staff broadcast payload and let game servers filter by rank + staffview
         String action = joined ? "§ejoined." : "§edisconnected.";
         String msg = action;
         String serverName = player.getCurrentServer()
                 .map(conn -> conn.getServer().getServerInfo().getName())
                 .orElse("proxy");
 
-        ServerOutboundMessage.sendMessageToAllServicesFireAndForget(
-                new StaffBroadcastProtocolObject(),
-                new StaffBroadcastProtocolObject.StaffBroadcastMessage(
-                        player.getUniqueId(),
-                        player.getUsername(),
-                        msg,
-                        serverName
-                )
+        RedisMessage.sendMessageToServer(
+                UUID.fromString(serverName),
+                FromProxyChannels.STAFF_BROADCAST,
+                new JSONObject()
+                        .put("sender", player.getUniqueId().toString())
+                        .put("senderName", player.getUsername())
+                        .put("message", msg)
+                        .put("server", serverName)
         );
 	}
 }

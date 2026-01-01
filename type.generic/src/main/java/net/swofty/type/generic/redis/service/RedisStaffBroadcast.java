@@ -1,17 +1,17 @@
 package net.swofty.type.generic.redis.service;
 
 import net.swofty.commons.protocol.objects.staff.StaffBroadcastProtocolObject;
-import net.swofty.commons.service.FromServiceChannels;
-import net.swofty.proxyapi.redis.ServiceToClient;
+import net.swofty.commons.proxy.FromProxyChannels;
+import net.swofty.proxyapi.redis.ProxyToClient;
 import net.swofty.type.generic.HypixelGenericLoader;
 import net.swofty.type.generic.command.commands.ChatCommand;
 import net.swofty.type.generic.user.HypixelPlayer;
 import org.json.JSONObject;
 
-public class RedisStaffBroadcast implements ServiceToClient {
+public class RedisStaffBroadcast implements ProxyToClient {
     @Override
-    public FromServiceChannels getChannel() {
-        return FromServiceChannels.STAFF_BROADCAST;
+    public FromProxyChannels getChannel() {
+        return FromProxyChannels.STAFF_BROADCAST;
     }
 
     @Override

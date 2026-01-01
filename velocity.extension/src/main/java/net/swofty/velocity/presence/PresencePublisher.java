@@ -8,7 +8,6 @@ import net.swofty.commons.protocol.objects.presence.UpdatePresenceProtocolObject
 import net.swofty.proxyapi.redis.ServerOutboundMessage;
 
 import java.util.UUID;
-//1/1/26
 
 public final class PresencePublisher {
 
