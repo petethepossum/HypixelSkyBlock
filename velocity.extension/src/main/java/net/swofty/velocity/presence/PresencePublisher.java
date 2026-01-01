@@ -22,7 +22,8 @@ public final class PresencePublisher {
                 System.currentTimeMillis()
         );
 
-        ServerOutboundMessage.sendMessageToAllServicesFireAndForget(
+        ServerOutboundMessage.sendMessageToServiceFireAndForget(
+                ServiceType.FRIEND,
                 new UpdatePresenceProtocolObject(),
                 new UpdatePresenceProtocolObject.UpdatePresenceMessage(info)
         );
@@ -47,7 +48,8 @@ public final class PresencePublisher {
                 System.currentTimeMillis()
         );
 
-        ServerOutboundMessage.sendMessageToAllServicesFireAndForget(
+        ServerOutboundMessage.sendMessageToServiceFireAndForget(
+                ServiceType.FRIEND,
                 new UpdatePresenceProtocolObject(),
                 new UpdatePresenceProtocolObject.UpdatePresenceMessage(info)
         );
