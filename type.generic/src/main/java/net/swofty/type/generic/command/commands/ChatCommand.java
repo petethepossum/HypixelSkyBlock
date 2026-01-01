@@ -2,6 +2,7 @@ package net.swofty.type.generic.command.commands;
 
 import net.minestom.server.command.builder.arguments.ArgumentType;
 import net.minestom.server.command.builder.arguments.ArgumentWord;
+import net.minestom.server.command.builder.suggestion.SuggestionEntry;
 import net.swofty.type.generic.command.CommandParameters;
 import net.swofty.type.generic.command.HypixelCommand;
 import net.swofty.type.generic.data.datapoints.DatapointChatType;
@@ -21,15 +22,15 @@ public class ChatCommand extends HypixelCommand {
         ArgumentWord chatType = ArgumentType.Word("type");
         chatType.setSuggestionCallback((sender, context, suggestion) -> {
             boolean isStaff = sender instanceof HypixelPlayer hp && hp.getRank().isStaff();
-            suggestion.addEntry("p");
-            suggestion.addEntry("party");
-            suggestion.addEntry("a");
-            suggestion.addEntry("all");
+            suggestion.addEntry(new SuggestionEntry("p"));
+            suggestion.addEntry(new SuggestionEntry("party"));
+            suggestion.addEntry(new SuggestionEntry("a"));
+            suggestion.addEntry(new SuggestionEntry("all"));
             if (isStaff) {
-                suggestion.addEntry("s");
-                suggestion.addEntry("staff");
-                suggestion.addEntry("staffview");
-                suggestion.addEntry("sv");
+                suggestion.addEntry(new SuggestionEntry("s"));
+                suggestion.addEntry(new SuggestionEntry("staff"));
+                suggestion.addEntry(new SuggestionEntry("staffview"));
+                suggestion.addEntry(new SuggestionEntry("sv"));
             }
         });
 

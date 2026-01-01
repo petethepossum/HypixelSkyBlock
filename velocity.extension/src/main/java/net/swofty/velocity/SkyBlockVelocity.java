@@ -48,6 +48,7 @@ import net.swofty.velocity.gamemanager.TransferHandler;
 import net.swofty.velocity.presence.PresencePublisher;
 import net.swofty.commons.protocol.objects.friend.NotifyFriendPresenceProtocolObject;
 import net.swofty.commons.ServiceType;
+import net.swofty.commons.protocol.objects.staff.StaffBroadcastProtocolObject;
 import net.swofty.proxyapi.redis.ServerOutboundMessage;
 import net.swofty.velocity.packet.PlayerChannelHandler;
 import net.swofty.velocity.redis.ChannelListener;
@@ -122,6 +123,7 @@ public class SkyBlockVelocity {
 					injectPlayer(postLoginEvent.getPlayer());
 					TestFlowManager.handlePlayerJoin(postLoginEvent.getPlayer().getUsername());
 					PresencePublisher.publish(postLoginEvent.getPlayer(), true, (String) null, null);
+					sendStaffJoinLeave(postLoginEvent.getPlayer(), true);
 					sendFriendPresenceNotification(postLoginEvent.getPlayer(), true);
 					continuation.resume();
 				}));
@@ -138,6 +140,7 @@ public class SkyBlockVelocity {
 							// Handle test flow player leave
 							TestFlowManager.handlePlayerLeave(disconnectEvent.getPlayer().getUsername());
 							PresencePublisher.publish(disconnectEvent.getPlayer(), false, (String) null, null);
+							sendStaffJoinLeave(disconnectEvent.getPlayer(), false);
 							sendFriendPresenceNotification(disconnectEvent.getPlayer(), false);
 							removePlayer(disconnectEvent.getPlayer());
 						})
@@ -379,5 +382,24 @@ public class SkyBlockVelocity {
 						online
 				)
 		);
+	}
+
+	private void sendStaffJoinLeave(Player player, boolean joined) {
+        // Build a staff broadcast payload and let game servers filter by rank + staffview
+        String action = joined ? "§ejoined." : "§edisconnected.";
+        String msg = action;
+        String serverName = player.getCurrentServer()
+                .map(conn -> conn.getServer().getServerInfo().getName())
+                .orElse("proxy");
+
+        ServerOutboundMessage.sendMessageToAllServicesFireAndForget(
+                new StaffBroadcastProtocolObject(),
+                new StaffBroadcastProtocolObject.StaffBroadcastMessage(
+                        player.getUniqueId(),
+                        player.getUsername(),
+                        msg,
+                        serverName
+                )
+        );
 	}
 }
