@@ -149,6 +149,7 @@ public class SkyBlockVelocity {
 							RegisteredServer newServer = serverConnectedEvent.getServer();
 							var type = GameManager.getTypeFromRegisteredServer(newServer);
 							PresencePublisher.publish(serverConnectedEvent.getPlayer(), true, newServer, type != null ? type.name() : null);
+							sendFriendPresenceNotification(serverConnectedEvent.getPlayer(), true);
 						}));
 
         server.getScheduler().buildTask(SkyBlockVelocity.getPlugin(), () -> {
@@ -157,7 +158,6 @@ public class SkyBlockVelocity {
                 var type = current.map(conn -> GameManager.getTypeFromRegisteredServer(conn.getServer())).orElse(null);
                 PresencePublisher.publish(player, true, current.map(ServerConnection::getServer).orElse(null),
                         type != null ? type.name() : null);
-                sendFriendPresenceNotification(player, true);
             });
         }).repeat(Duration.ofSeconds(10)).schedule();
 

@@ -30,14 +30,28 @@ public final class PresencePublisher {
     }
 
     public static void publish(Player player, boolean online, RegisteredServer server, String serverType) {
-        UUID serverId = null;
+        String serverIdStr = null;
         if (server != null) {
-            try {
-                serverId = UUID.fromString(server.getServerInfo().getName());
-            } catch (Exception ignored) {
+            var gameServer = net.swofty.velocity.gamemanager.GameManager.getFromRegisteredServer(server);
+            if (gameServer != null) {
+                serverIdStr = gameServer.shortDisplayName();
+            } else {
+                serverIdStr = server.getServerInfo().getName();
             }
         }
-        publish(player, online, serverType, serverId);
+
+        PresenceInfo info = new PresenceInfo(
+                player.getUniqueId(),
+                online,
+                serverType,
+                serverIdStr,
+                System.currentTimeMillis()
+        );
+
+        ServerOutboundMessage.sendMessageToAllServicesFireAndForget(
+                new UpdatePresenceProtocolObject(),
+                new UpdatePresenceProtocolObject.UpdatePresenceMessage(info)
+        );
     }
 }
 

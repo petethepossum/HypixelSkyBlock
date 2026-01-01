@@ -19,11 +19,27 @@ public class FriendPresenceNotificationEndpoint implements ServiceEndpoint<
             ServiceProxyRequest message,
             NotifyFriendPresenceProtocolObject.NotifyFriendPresenceMessage messageObject) {
 
-        if (messageObject.online()) {
-            FriendCache.handlePlayerJoin(messageObject.player(), messageObject.playerName());
-        } else {
-            FriendCache.handlePlayerLeave(messageObject.player(), messageObject.playerName());
+        var previous = net.swofty.service.friend.PresenceStorage.get(messageObject.player());
+        boolean changed = previous == null || previous.isOnline() != messageObject.online();
+
+        net.swofty.service.friend.PresenceStorage.upsertAndGetPrevious(
+                new net.swofty.commons.presence.PresenceInfo(
+                        messageObject.player(),
+                        messageObject.online(),
+                        null,
+                        null,
+                        System.currentTimeMillis()
+                )
+        );
+
+        if (changed) {
+            if (messageObject.online()) {
+                FriendCache.handlePlayerJoin(messageObject.player(), messageObject.playerName());
+            } else {
+                FriendCache.handlePlayerLeave(messageObject.player(), messageObject.playerName());
+            }
         }
+
         return new NotifyFriendPresenceProtocolObject.NotifyFriendPresenceResponse(true);
     }
 }

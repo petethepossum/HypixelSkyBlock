@@ -32,6 +32,13 @@ public class PresenceStorage {
                 .collect(Collectors.toMap(PresenceInfo::getUuid, p -> p, (a, b) -> a));
     }
 
+    /**
+     * Upsert presence and return the previous entry (if any).
+     */
+    public static PresenceInfo upsertAndGetPrevious(PresenceInfo presence) {
+        return presenceByUuid.put(presence.getUuid(), presence);
+    }
+
     public static PresenceInfo get(UUID uuid) {
         return presenceByUuid.get(uuid);
     }
