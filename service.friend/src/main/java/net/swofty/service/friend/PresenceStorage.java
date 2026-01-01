@@ -39,6 +39,31 @@ public class PresenceStorage {
         return presenceByUuid.put(presence.getUuid(), presence);
     }
 
+    /**
+     * Upsert presence while preserving non-null server metadata from previous entries.
+     */
+    public static PresenceInfo upsertPreservingServer(PresenceInfo incoming) {
+        PresenceInfo previous = presenceByUuid.get(incoming.getUuid());
+        if (previous == null) {
+            presenceByUuid.put(incoming.getUuid(), incoming);
+            return null;
+        }
+
+        String serverType = incoming.getServerType() != null ? incoming.getServerType() : previous.getServerType();
+        String serverId = incoming.getServerId() != null ? incoming.getServerId() : previous.getServerId();
+        long lastSeen = incoming.getLastSeen() > 0 ? incoming.getLastSeen() : previous.getLastSeen();
+
+        PresenceInfo merged = new PresenceInfo(
+                incoming.getUuid(),
+                incoming.isOnline(),
+                serverType,
+                serverId,
+                lastSeen
+        );
+        presenceByUuid.put(incoming.getUuid(), merged);
+        return previous;
+    }
+
     public static PresenceInfo get(UUID uuid) {
         return presenceByUuid.get(uuid);
     }

@@ -48,6 +48,20 @@ public class ActionPlayerChat implements HypixelEventClass {
             return;
         }
 
+        if (chatType == DatapointChatType.Chats.STAFF) {
+            if (!rank.isStaff()) {
+                player.sendMessage("§cYou are not staff and were moved to the ALL channel.");
+                player.getChatType().switchTo(DatapointChatType.Chats.ALL);
+                return;
+            }
+            // Staff chat: broadcast to online staff only
+            SkyBlockGenericLoader.getLoadedPlayers().stream()
+                    .filter(SkyBlockPlayer::getRankIsStaff)
+                    .filter(staff -> net.swofty.type.generic.command.commands.ChatCommand.isStaffViewEnabled(staff.getUuid()))
+                    .forEach(staff -> staff.sendMessage("§b[STAFF] " + player.getFullDisplayName() + "§f: " + finalMessage));
+            return;
+        }
+
         List<SkyBlockPlayer> receivers = SkyBlockGenericLoader.getLoadedPlayers();
 
         receivers.removeIf(receiver -> {

@@ -117,6 +117,10 @@ public class SkyBlockPlayer extends HypixelPlayer {
         return SkyBlockPlayerProfiles.get(this.getUuid());
     }
 
+    public boolean getRankIsStaff() {
+        return getRank().isStaff();
+    }
+
     public DatapointPetData.UserPetData getPetData() {
         return getSkyblockDataHandler().get(SkyBlockDataHandler.Data.PET_DATA, DatapointPetData.class).getValue();
     }

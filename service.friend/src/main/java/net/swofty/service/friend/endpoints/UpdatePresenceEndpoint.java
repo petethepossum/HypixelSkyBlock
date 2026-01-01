@@ -21,7 +21,7 @@ public class UpdatePresenceEndpoint implements ServiceEndpoint<
             ServiceProxyRequest message,
             UpdatePresenceProtocolObject.UpdatePresenceMessage messageObject) {
 
-        PresenceStorage.upsert(messageObject.presence());
+        PresenceStorage.upsertPreservingServer(messageObject.presence());
         return new UpdatePresenceProtocolObject.UpdatePresenceResponse(true);
     }
 }
