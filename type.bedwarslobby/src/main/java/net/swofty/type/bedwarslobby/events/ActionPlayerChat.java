@@ -15,6 +15,8 @@ import net.swofty.type.generic.event.HypixelEventClass;
 import net.swofty.type.generic.party.PartyManager;
 import net.swofty.type.generic.user.HypixelPlayer;
 import net.swofty.type.generic.user.categories.Rank;
+import net.swofty.proxyapi.redis.ServerOutboundMessage;
+import net.swofty.commons.proxy.ToProxyChannels;
 
 import java.util.List;
 
@@ -52,6 +54,26 @@ public class ActionPlayerChat implements HypixelEventClass {
             }
 
             PartyManager.sendChat(player, message);
+            return;
+        }
+
+        if (chatType == DatapointChatType.Chats.STAFF) {
+            if (!rank.isStaff()) {
+                player.sendMessage("§cYou are not staff and were moved to the ALL channel.");
+                player.getChatType().switchTo(DatapointChatType.Chats.ALL);
+                return;
+            }
+            String serverName = player.getInstance() != null ? player.getInstance().toString() : "unknown";
+            ServerOutboundMessage.sendMessageToProxy(
+                    ToProxyChannels.PLAYER_HANDLER,
+                    new org.json.JSONObject()
+                            .put("action", "STAFF_BROADCAST")
+                            .put("sender", player.getUuid().toString())
+                            .put("senderName", player.getFullDisplayName())
+                            .put("message", message)
+                            .put("server", serverName),
+                    json -> {}
+            );
             return;
         }
 
